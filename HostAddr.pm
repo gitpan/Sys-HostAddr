@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.9 2010/03/06 21:36:35 jkister Exp $
+# $Id: HostAddr.pm,v 0.91 2010/03/08 20:38:07 jkister Exp $
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,10 +10,13 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.9 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.91 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
-$ENV{PATH} = "/usr/sbin:/sbin:/usr/etc:$ENV{PATH}"; # silly os/admins
+
+$ENV{PATH} = ($^O eq 'MSWin32') ?
+               'C:\Windows\system32;C:\Windows;C:\strawberry\c\bin;C:\strawberry\perl\bin;' . $ENV{PATH} :
+               "/usr/sbin:/sbin:/usr/etc:$ENV{PATH}"; # silly centos not having ifconfig in path of non-root
 
 sub new {
     my $class = shift;
@@ -66,6 +69,7 @@ sub public {
         alarm(0);
     };
     alarm(0);
+    warn $@ if $@;
 
     return( $public );
 }
