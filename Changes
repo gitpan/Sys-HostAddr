@@ -1,0 +1,6 @@
+Revision history for Perl extension Sys::HostAddr.
+
+0.9  Fri Mar  6 21:31:45 EST 2010
+	- original version; created by h2xs 1.21 with options
+		-AX Sys::HostAddr
+
