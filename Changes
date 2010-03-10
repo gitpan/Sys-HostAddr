@@ -1,5 +1,8 @@
 Revision history for Perl extension Sys::HostAddr.
 
+0.92  Tue Mar  9 22:18:03 EST 2010
+       - win32 interfaces() fix
+
 0.91  Tue Mar  8 20:38:07 EST 2010
        - fix win32 cpan installation
        - verbose public timeout

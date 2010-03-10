@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.91 2010/03/08 20:38:07 jkister Exp $
+# $Id: HostAddr.pm,v 0.92 2010/03/09 22:18:03 jkister Exp $
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.91 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.92 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -77,7 +77,7 @@ sub public {
 sub interfaces {
     my $self = shift;
 
-    return _win32_int() if($^O eq 'MSWin32');
+    return $self->_win32_int() if($^O eq 'MSWin32');
 
     my $cfg_aref = $self->ifconfig();
     my @interfaces;
