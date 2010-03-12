@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.92 2010/03/09 22:18:03 jkister Exp $
+# $Id: HostAddr.pm,v 0.93 2010/03/11 03:47:47 jkister Exp $
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.92 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.93 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -77,12 +77,12 @@ sub public {
 sub interfaces {
     my $self = shift;
 
-    return $self->_win32_int() if($^O eq 'MSWin32');
-
     my $cfg_aref = $self->ifconfig();
     my @interfaces;
-    for my $line (@{$cfg_aref}){
-        if($line =~ /^([^\s:]+):?\s+/){
+    for (@{$cfg_aref}){
+        if(/^\s+Description[\s\.]+:\s+([^\r\n]+)/){
+            push @interfaces, $1;
+        }elsif(/^([^\s:]+):?\s+/ && $^O ne 'MSWin32'){
             push @interfaces, $1;
         }
     }
@@ -99,7 +99,11 @@ sub addresses {
         if(/^\s+${ipv}\s+(?:addr:)?(\S+)\s/){
             push @addrs, $1; # unix
         }elsif(/^\s+${ipv}[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
-            push @addrs, $1; # win32
+            push @addrs, $1; # win7
+        }elsif(/^\s+IP Address[\s\.]+:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/){
+            push @addrs, $1 if($self->{ipv} eq '4'); # winxp ipv4
+        }elsif(/^\s+IP Address[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
+            push @addrs, $1 if($self->{ipv} eq '6'); # winxp ipv6
         }
     }
     return( \@addrs );
@@ -129,12 +133,17 @@ sub ip {
                 die "unknown netmask for $addr on $interface\n";
             }
             push @{$data{$interface}}, { address => $addr, netmask => $netmask };
-        }elsif($line =~ /^\s+Description[\s\.]+:\s(.+)/){
+        }elsif($line =~ /^\s+Description[\s\.]+:\s([^\r\n]+)/){
             $interface = $1;
         }elsif($line =~ /^\s+${ipv}[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
-            $addr = $1;
+            $addr = $1; # win7
+        }elsif($line =~ /^\s+IP Address[\s\.]+:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/){
+            $addr = $1 if($self->{ipv} eq '4'); # winXP IPv4
+        }elsif($line =~ /^\s+IP Address[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
+            $addr = $1 if($self->{ipv} eq '6'); # winXP IPv6
         }elsif($line =~ /^\s+Subnet Mask[\s\.]+:\s+(\S+)/){
             $netmask = $1;
+            #this handles multiple ip addrs on same interface (tested on XP, anyway)
             push @{$data{$interface}}, { address => $addr, netmask => $netmask };
         }
     }
@@ -152,10 +161,14 @@ sub first_ip {
         if(/^\s+${ipv}\s+(?:addr:)?(\S+)\s/){
             $addr = $1; # unix
         }elsif(/^\s+${ipv}[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
-            $addr = $1; # win32
+            $addr = $1; # windows 7 win32
+        }elsif(/^\s+IP Address[\s\.]+:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/){
+            $addr = $1 if($self->{ipv} eq '4'); # winxp ipv4
+        }elsif(/^\s+IP Address[\s\.]+:\s+([a-f0-9:\.]{3,40})/){
+            $addr = $1 if($self->{ipv} eq '6'); # winxp ipv6
         }
         if($addr){
-            next if($addr =~ /^127\./); # never say ln is first
+            next if($addr =~ /^(?:127\.|::1)/); # never say ln is first
             return( $addr );
         }
     }
@@ -183,81 +196,77 @@ sub ifconfig {
 
 sub main_ip {
     my $self = shift;
-    
-    return $self->_win32_ip() if($^O eq 'MSWin32');
+    my $method = shift || 'auto';
 
-    my $addr;
-    my $hostname = hostname();
-    $self->_debug( "attempting hostname lookup in main_ip: $hostname" );
-    eval {
-        local $SIG{ALRM} = sub { die "timeout on $hostname\n" };
-        alarm(3);
-        my @x = ( gethostbyname($hostname) )[4];
+    if($method eq 'preferred' && $^O ne 'MSWin32'){
+        die "'preferred' method to main_ip available on MSWin32 only.\n";
+    }
+    unless($method =~ /^(?:dns|route|preferred|auto)$/){
+        die "invalid method given to main_ip\n";
+    }
+ 
+    if($method eq 'dns' || $method eq 'auto'){  
+        my $addr;
+        my $hostname = hostname();
+        $self->_debug( "attempting hostname lookup in main_ip: $hostname" );
+        eval {
+            local $SIG{ALRM} = sub { die "timeout on $hostname\n" };
+            alarm(3);
+            my @x = ( gethostbyname($hostname) )[4];
+            alarm(0);
+    
+            verbose( "multiple ip addrs found for $hostname" ) if(@x > 1);
+            $addr = join( '.', unpack('C4', $x[0]) );
+        };
         alarm(0);
-
-        verbose( "multiple ip addrs found for $hostname" ) if(@x > 1);
-        $addr = join( '.', unpack('C4', $x[0]) );
-    };
-    alarm(0);
-    if($@){
-        $self->_warn($@);
-    }    
-    if( $addr ){
-        return $addr unless($addr =~ /^127\./); # never say lo is main
+        if($@){
+            $self->_warn($@);
+        }    
+        if( $addr ){
+            return $addr unless($addr =~ /^(?:127\.|::1)/); # never say lo is main
+        }
+        $self->_debug( "DNS lookup did not yield an IP addr." );
     }
 
-    $self->_debug( "DNS lookup did not yield an IP addr; proceeding with route lookup" );
-    # if dns method failed us, check for default route, find local ip
-    # addr(s) in same subnet -"first" one listed will be called "main"
+    if($method eq 'route' || $method eq 'auto'){
+        # if dns method failed us, check for default route, find local ip
+        # addr(s) in same subnet -"first" one listed will be called "main"
+        
+        my ($cmd,$param);
+        if($^O eq 'solaris'){
+            $cmd = 'route';
+            $param = 'get 0.0.0.0';
+        }else{
+            $cmd = 'netstat'; # works with MSWin32, too
+            $param = '-nr';
+        }
     
-    my ($cmd,$param);
-    if($^O eq 'solaris'){
-        $cmd = 'route';
-        $param = 'get 0.0.0.0';
-    }else{
-        $cmd = 'netstat'; # works with MSWin32, too
-        $param = '-nr';
-    }
-
-    my @data = $self->_get_stdout($cmd, $param);
-    for my $line (@data){
-        chomp $line;
-        if($line =~ /^\s+0\.0\.0\.0\s+0\.0\.0\.0\s+\S+\s+(\S+)\s+/){
-            return( $1 ); # mswin32
-        }elsif($line =~ /^(?:0\.0\.0\.0|default)\s.*\s(\S+)$/){
-            # 0.0.0.0 = debian linux, default = freebsd
-            return( $self->first_ip($1) );
-        }elsif($line =~ /^\s+interface:\s+(\S+)$/){
-            return( $self->first_ip($1) ); # solaris
+        my @data = $self->_get_stdout($cmd, $param);
+        for my $line (@data){
+            chomp $line;
+            if($line =~ /^\s+0\.0\.0\.0\s+0\.0\.0\.0\s+\S+\s+(\S+)\s+/){
+                return( $1 ); # mswin32
+            }elsif($line =~ /^(?:0\.0\.0\.0|default)\s.*\s(\S+)$/){
+                # 0.0.0.0 = debian linux, default = freebsd
+                return( $self->first_ip($1) );
+            }elsif($line =~ /^\s+interface:\s+(\S+)$/){
+                return( $self->first_ip($1) ); # solaris
+            }
         }
     }
+
+    if($^O eq 'MSWin32'){
+        if($method eq 'preferred' || $method eq 'auto'){
+            my $cfg_aref = $self->ifconfig();
+            foreach (@{$cfg_aref}){
+                if(/^\s+${ipv}[\s\.]+:\s+(\S+)\(Preferred\)/){
+                    return($1);
+                }
+            }
+        }
+    }
+ 
     die "could not determine main ip address\n"; # we dont pick one at random
-}
-
-sub _win32_int {
-    my $self = shift;
-
-    my @data = $self->_get_stdout('netstat','-nr');
-    my @interfaces;
-    for (@data){
-        chomp;
-        # <iface#>...<mac>...<descr>
-        push @interfaces, substr( $_, 30 ) if(/^\s+\d+/);
-        last if(/^=+$/ && @interfaces)
-    }
-    return( \@interfaces );
-}
-
-sub _win32_ip {
-    my $self = shift;
-
-    my $cfg_aref = $self->ifconfig();
-    foreach (@{$cfg_aref}){
-        if(/^\s+${ipv}[\s\.]+:\s+(\S+)\(Preferred\)/){
-            return($1);
-        }
-    }
-    die "could not determine main ip address\n";
 }
 
 sub _mkipv {
@@ -421,16 +430,18 @@ C<interfaces> will return an array reference of all interfaces found.
 
 =head1 CAVEATS
 
-Win32 lightly tested with L<Strawberry Perl|http://strawberryperl.com/> 5.10.1 on Windows7
-Win32 lacks some options, like per interface specification
-IPv6 support not well tested.
+=over 4
+
+=item Win32 lightly tested with L<Strawberry Perl|http://strawberryperl.com/> 5.10.1 on Windows7
+=item Win32 lacks some options, like per interface specification
+=item Win32 lacks some features, like timeouts during lookups
+=item IPv6 support not well tested.
 
 =head1 RESTRICTIONS
 
 =over 4
 
 =item IPv6 support not well tested.
-
 =item Win32 support not complete.
 
 =back

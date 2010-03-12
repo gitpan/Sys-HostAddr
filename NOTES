@@ -255,6 +255,45 @@ lo        Link encap:Local Loopback
           RX bytes:1235017685 (1.1 GiB)  TX bytes:1235017685 (1.1 GiB)
 ######################################################################
 
+Windows XP:
+Windows IP Configuration
+
+        Host Name . . . . . . . . . . . . : example-machine
+        Primary Dns Suffix  . . . . . . . : 
+        Node Type . . . . . . . . . . . . : Unknown
+        IP Routing Enabled. . . . . . . . : No
+        WINS Proxy Enabled. . . . . . . . : No
+        DNS Suffix Search List. . . . . . : example.net
+
+Ethernet adapter Wireless Network Connection:
+
+        Connection-specific DNS Suffix  . : example.net
+        Description . . . . . . . . . . . : Broadcom 802.11b/g WLAN
+        Physical Address. . . . . . . . . : C4-17-FE-8C-73-6B
+        Dhcp Enabled. . . . . . . . . . . : Yes
+        Autoconfiguration Enabled . . . . : Yes
+        IP Address. . . . . . . . . . . . : 10.1.1.215
+        Subnet Mask . . . . . . . . . . . : 255.255.255.0
+        Default Gateway . . . . . . . . . : 10.1.1.1
+        DHCP Server . . . . . . . . . . . : 10.1.1.3
+        DNS Servers . . . . . . . . . . . : 10.232.4.14
+        Lease Obtained. . . . . . . . . . : Thursday, March 11, 2010 3:13:11 AM
+        Lease Expires . . . . . . . . . . : Friday, March 12, 2010 3:13:11 AM
+
+PPP adapter example:
+
+        Connection-specific DNS Suffix  . : 
+        Description . . . . . . . . . . . : WAN (PPP/SLIP) Interface
+        Physical Address. . . . . . . . . : 00-53-45-00-00-00
+        Dhcp Enabled. . . . . . . . . . . : No
+        IP Address. . . . . . . . . . . . : 10.118.22.29
+        Subnet Mask . . . . . . . . . . . : 255.255.255.255
+        Default Gateway . . . . . . . . . : 
+        DNS Servers . . . . . . . . . . . : 10.118.13.50
+                                            10.118.13.51
+
+
+#####################################################################
 WINDOWS 7:
 Windows IP Configuration
 

@@ -1,5 +1,8 @@
 Revision history for Perl extension Sys::HostAddr.
 
+0.93  Thu Mar 11 03:47:47 EST 2010
+       - winXP fixes
+
 0.92  Tue Mar  9 22:18:03 EST 2010
        - win32 interfaces() fix
 

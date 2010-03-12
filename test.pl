@@ -5,7 +5,6 @@
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
-
 use strict;
 use Test;
 
@@ -29,18 +28,19 @@ ok( $first_ip =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ );
 my $yn;
 print "# allow Internet access to determine public IP address? [Y/n]: ";
 eval {
-    local $SIG{ALRM} = sub { $yn='Y'; die "# timeout on internet response, allowing.\n"; };
+    local $SIG{ALRM} = sub { die "timeout on response; allowing.\n" };
     alarm(6);
     chop($yn=<STDIN>);
     alarm(0);
 };
 alarm(0);
 warn $@ if $@;
+
 if( $yn =~ /^n/i ){
     skip(1);
 }else{
     my $public = $sysaddr->public();
-    print "public IP address: [$public]\n";
+    print "public IP address: $public\n";
     ok( $public =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ );
 }
     
@@ -68,5 +68,5 @@ foreach my $interface ( @{$int_aref} ){
     print "# Found interface: $interface\n";
 }
 
-ok( @{$int_aref} > 1 ); # loopback + other
+ok( @{$int_aref} > 0 );
 
