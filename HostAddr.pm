@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.93 2010/03/11 03:47:47 jkister Exp $
+# $Id: HostAddr.pm,v 0.94 2010/03/15 02:18:23 jkister Exp $
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.93 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.94 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -82,7 +82,7 @@ sub interfaces {
     for (@{$cfg_aref}){
         if(/^\s+Description[\s\.]+:\s+([^\r\n]+)/){
             push @interfaces, $1;
-        }elsif(/^([^\s:]+):?\s+/ && $^O ne 'MSWin32'){
+        }elsif(/^([^\s:]+):?\s+/ && $^O ne 'MSWin32' && $^O ne 'cygwin'){
             push @interfaces, $1;
         }
     }
@@ -181,7 +181,7 @@ sub ifconfig {
     my $getint = shift || $self->{interface};
 
     my ($cmd,$param);
-    if($^O eq 'MSWin32'){
+    if($^O eq 'MSWin32' || $^O eq 'cygwin'){
         $cmd = 'ipconfig';
         $param = '/all';
     }else{
@@ -198,8 +198,8 @@ sub main_ip {
     my $self = shift;
     my $method = shift || 'auto';
 
-    if($method eq 'preferred' && $^O ne 'MSWin32'){
-        die "'preferred' method to main_ip available on MSWin32 only.\n";
+    if( $method eq 'preferred' && ($^O ne 'MSWin32' && $^O ne 'cygwin') ){ 
+        die "'preferred' method to main_ip available on MSWin32/cygwin only.\n";
     }
     unless($method =~ /^(?:dns|route|preferred|auto)$/){
         die "invalid method given to main_ip\n";
@@ -255,7 +255,7 @@ sub main_ip {
         }
     }
 
-    if($^O eq 'MSWin32'){
+    if($^O eq 'MSWin32' || $^O eq 'cygwin'){
         if($method eq 'preferred' || $method eq 'auto'){
             my $cfg_aref = $self->ifconfig();
             foreach (@{$cfg_aref}){
@@ -272,8 +272,8 @@ sub main_ip {
 sub _mkipv {
     my $self = shift;
 
-    return ($^O eq 'MSWin32' && $self->{ipv} eq '6') ? 'IPv6 Address' :
-           ($^O eq 'MSWin32')    ? 'IPv4 Address' :
+    return ( ($^O eq 'MSWin32' || $^O eq 'cygwin') && $self->{ipv} eq '6' ) ? 'IPv6 Address' :
+           ($^O eq 'MSWin32' || $^O eq 'cygwin')    ? 'IPv4 Address' :
            ($self->{ipv} eq '6') ? 'inet6' :
                                    'inet';
 }
@@ -355,7 +355,7 @@ C<debug> will control ancillary/informational messages being printed.
 =item ipv
 
 C<ipv> will limit response data to either IPv4 or IPv6 addresses.
-Default is IPv4 only.
+Default: IPv4
 
 =item interface
 
@@ -369,10 +369,11 @@ interface argument directly.
 
 =over 4
 
-=item main_ip()
+=item main_ip( [$method] )
 
 C<main_ip> will attempt to find the "main" or "primary" IP address of
-the machine.
+the machine.  method can be: B<auto> (I<default>), B<preferred>, B<route>, or B<dns>.
+    
 
 =item first_ip( [$interface] )
 
@@ -433,8 +434,13 @@ C<interfaces> will return an array reference of all interfaces found.
 =over 4
 
 =item Win32 lightly tested with L<Strawberry Perl|http://strawberryperl.com/> 5.10.1 on Windows7
+
 =item Win32 lacks some options, like per interface specification
+
 =item Win32 lacks some features, like timeouts during lookups
+
+=item Cygwin not tested at all, should work as well as MSWin32
+
 =item IPv6 support not well tested.
 
 =head1 RESTRICTIONS
@@ -442,6 +448,7 @@ C<interfaces> will return an array reference of all interfaces found.
 =over 4
 
 =item IPv6 support not well tested.
+
 =item Win32 support not complete.
 
 =back

@@ -8,10 +8,10 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 7 };
+BEGIN { plan tests => 6 };
 
 use Sys::HostAddr;
-print "# testing Sys::HostAddr v$Sys::HostAddr::VERSION...\n"; 
+print "# testing Sys::HostAddr v$Sys::HostAddr::VERSION on platform: $^O \n"; 
 
 my $sysaddr = Sys::HostAddr->new( debug => 0 );
 
@@ -25,24 +25,7 @@ my $first_ip = $sysaddr->first_ip();
 print "# First IP Adddress is: $first_ip\n";
 ok( $first_ip =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ );
 
-my $yn;
-print "# allow Internet access to determine public IP address? [Y/n]: ";
-eval {
-    local $SIG{ALRM} = sub { die "timeout on response; allowing.\n" };
-    alarm(6);
-    chop($yn=<STDIN>);
-    alarm(0);
-};
-alarm(0);
-warn $@ if $@;
-
-if( $yn =~ /^n/i ){
-    skip(1);
-}else{
-    my $public = $sysaddr->public();
-    print "public IP address: $public\n";
-    ok( $public =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ );
-}
+# don't test public method, no good way for cpan auto installs
     
 my $href = $sysaddr->ip();
 print "# IP info:\n";
