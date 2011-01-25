@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.94 2010/03/15 02:18:23 jkister Exp $
+# $Id: HostAddr.pm,v 0.95 2010/10/06 10:35:25 jkister Exp $
 # Copyright (c) 2010 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.94 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.95 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -54,7 +54,7 @@ sub public {
         alarm(3);
         print $sock "GET /automation/n09230945.asp HTTP/1.1\r\n",                     
                     "Host: www.whatismyip.com\r\n",
-                    "User-Agent: Sys::HostAddr/$VERSION (${platform}; Perl $])\r\n",  
+                    "User-Agent: Sys::HostAddr/$VERSION (compatible; MSIE 8.0; ${platform}; Perl $])\r\n",  
                     "Accept: text/html; q=0.5, text/plain\r\n",
                     "Connection: close\r\n",
                     "\r\n";
@@ -273,9 +273,9 @@ sub _mkipv {
     my $self = shift;
 
     return ( ($^O eq 'MSWin32' || $^O eq 'cygwin') && $self->{ipv} eq '6' ) ? 'IPv6 Address' :
-           ($^O eq 'MSWin32' || $^O eq 'cygwin')    ? 'IPv4 Address' :
-           ($self->{ipv} eq '6') ? 'inet6' :
-                                   'inet';
+             ($^O eq 'MSWin32' || $^O eq 'cygwin')  ? 'IPv4 Address' :
+             ($self->{ipv} eq '6') ? 'inet6' :
+                                     'inet';
 }
 
 sub _get_stdout {
@@ -294,16 +294,15 @@ sub _get_stdout {
 
 sub _warn {
     my $self = shift;
-    my $msg = join(' ', @_);
+    my $msg = join('', @_);
 
     warn "$self->{class}: $msg\n";
 }
 
 sub _debug {
     my $self = shift;
-    my $msg = join(' ', @_);
 
-    $self->_warn($msg) if($self->{debug});
+    $self->_warn(@_) if($self->{debug});
 }
 
 
@@ -372,7 +371,8 @@ interface argument directly.
 =item main_ip( [$method] )
 
 C<main_ip> will attempt to find the "main" or "primary" IP address of
-the machine.  method can be: B<auto> (I<default>), B<preferred>, B<route>, or B<dns>.
+the machine.  method can be: B<auto> (I<default>), B<preferred> (MSWin32/cygwin only),
+B<route>, or B<dns>.
     
 
 =item first_ip( [$interface] )

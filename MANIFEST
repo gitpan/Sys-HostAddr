@@ -5,4 +5,4 @@ MANIFEST
 Makefile.PL
 NOTES
 README
-test.pl
+t/main.t
