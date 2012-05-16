@@ -1,6 +1,6 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.95 2010/10/06 10:35:25 jkister Exp $
-# Copyright (c) 2010 Jeremy Kister.
+# $Id: HostAddr.pm,v 0.96 2012/05/15 12:22:14 jkister Exp $
+# Copyright (c) 2010-2012 Jeremy Kister.
 # Released under Perl's Artistic License.
 
 package Sys::HostAddr;
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.95 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.96 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -42,8 +42,13 @@ sub new {
 sub public {
     my $self = shift;
 
+    unless( $self->{ipv} == 4 ){
+        warn "public method not supported on IPv $self->{ipv}\n";
+        return;
+    }
+
     my $sock = IO::Socket::INET->new(Proto => 'tcp',
-                                     PeerAddr => 'www.whatismyip.com',     
+                                     PeerAddr => 'automation.whatismyip.com',     
                                      PeerPort => 80, 
                                      Timeout => 3);       
      
@@ -52,8 +57,8 @@ sub public {
     eval {
         local $SIG{ALRM} = sub { die "timeout during GET\n" };
         alarm(3);
-        print $sock "GET /automation/n09230945.asp HTTP/1.1\r\n",                     
-                    "Host: www.whatismyip.com\r\n",
+        print $sock "GET /n09230945.asp HTTP/1.1\r\n",                     
+                    "Host: automation.whatismyip.com\r\n",
                     "User-Agent: Sys::HostAddr/$VERSION (compatible; MSIE 8.0; ${platform}; Perl $])\r\n",  
                     "Accept: text/html; q=0.5, text/plain\r\n",
                     "Connection: close\r\n",
@@ -82,7 +87,7 @@ sub interfaces {
     for (@{$cfg_aref}){
         if(/^\s+Description[\s\.]+:\s+([^\r\n]+)/){
             push @interfaces, $1;
-        }elsif(/^([^\s:]+):?\s+/ && $^O ne 'MSWin32' && $^O ne 'cygwin'){
+        }elsif(/^([a-z0-9]+(?::[0-9]+)?):?\s+/ && $^O ne 'MSWin32' && $^O ne 'cygwin'){
             push @interfaces, $1;
         }
     }
@@ -117,7 +122,7 @@ sub ip {
     my %data;
     my ($interface,$addr,$netmask);
     for my $line (@{$cfg_aref}){
-        if($line =~ /^([^\s:]+):?\s+/){
+        if($line =~ /^([a-z0-9]+(?::[0-9]+)?):?\s+/ && $^O ne 'MSWin32' && $^O ne 'cygwin'){
             $interface = $1;
         }elsif($line =~ /^\s+${ipv}\s+(?:addr:)?(\S+)\s/){
             my $addr = $1;
@@ -322,6 +327,8 @@ use Sys::HostAddr;
 
 my $sysaddr = Sys::HostAddr->new();
 
+my $string = $sysaddr->public();
+
 my $aref = $sysaddr->interfaces();
 
 my $aref = $sysaddr->addresses();
@@ -367,6 +374,13 @@ interface argument directly.
 =head1 USAGE
 
 =over 4
+
+=item public()
+
+C<public> will attempt to find the public ip address of your machine.  
+usefull if you're behind some NAT.  Sends an automation request to the
+folks at www.whatismyip.com.  Works on IPv4 only.
+
 
 =item main_ip( [$method] )
 
@@ -428,6 +442,8 @@ C<interfaces> will return an array reference of all interfaces found.
     my $main = $sysaddr->main_ip();
     print "$main appears to be the main ip address of this machine\n";
 
+    my $pub = $sysaddr->public();
+    print "public addr appears to be $pub\n";
 
 =head1 CAVEATS
 
