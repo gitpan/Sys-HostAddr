@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.99 2014/03/12 21:22:14 jkister Exp $
+# $Id: HostAddr.pm,v 0.991 2014/03/12 21:22:14 jkister Exp $
 # Copyright (c) 2010-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.99 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.991 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -379,7 +379,7 @@ interface argument directly.
 
 C<public> will attempt to find the public ip address of your machine.  
 usefull if you're behind some NAT.  Sends an automation request to the
-folks at www.whatismyip.com.  Works on IPv4 only.
+www.dnsbyweb.com service.  Works on IPv4 only.
 
 
 =item main_ip( [$method] )

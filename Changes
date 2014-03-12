@@ -1,7 +1,7 @@
 Revision history for Perl extension Sys::HostAddr.
 
-0.99  Wed Mar 11 21:29:49 EDT 2014
-       - www.whatismyip.com people changed again, moving to my own.
+0.991  Wed Mar 11 21:29:49 EDT 2014
+        - www.whatismyip.com people changed again, moving to my own.
 
 0.96  Tue May 15 12:22:14 EDT 2012
        - www.whatismyip.com people changed their automation URL
