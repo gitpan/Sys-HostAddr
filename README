@@ -1,4 +1,4 @@
-Sys::HostAddr version 0.96
+Sys::HostAddr version 0.99
 =======================
 
 Sys::HostAddr provides methods to help retreive IP address and
@@ -22,7 +22,7 @@ Sys::Hostname
 
 COPYRIGHT AND LICENCE
 
-    Copyright (C) 2010-2012 Jeremy Kister.
+    Copyright (C) 2010-2014 Jeremy Kister.
 
     This software may be copied and distributed under the terms
     found in the Perl "Artistic License".

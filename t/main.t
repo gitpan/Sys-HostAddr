@@ -2,7 +2,7 @@
 
 # Sys::HostAddr main.t
 # $Id: test.pl,v 1.0 2010/10/06 10:32:25 jkister Exp $
-# Copyright (c) 2010 Jeremy Kister.
+# Copyright (c) 2010-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
 use strict;
