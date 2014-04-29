@@ -5,6 +5,11 @@
 # Copyright (c) 2010-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
+BEGIN {
+    #https://rt.cpan.org/Public/Bug/Display.html?id=82629
+    $ENV{LC_ALL} = 'C';
+};
+
 use strict;
 use Test::Simple tests => 6;
 

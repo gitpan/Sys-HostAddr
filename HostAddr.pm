@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.991 2014/03/12 21:22:14 jkister Exp $
+# $Id: HostAddr.pm,v 0.992 2014/04/28 21:34:52 jkister Exp $
 # Copyright (c) 2010-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.991 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.992 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -130,6 +130,8 @@ sub ip {
                 my $hexed = $1;
                 my @hnm = $hexed =~ /^(..)(..)(..)(..)$/;
                 $netmask = join('.', map { hex $_ } @hnm);
+            }elsif($line =~ /netmask\s+(\S+)/){
+                $netmask = $1;
             }elsif($line =~ /Mask:(\S+)/){
                 $netmask = $1;
             }elsif($self->{ipv} eq '6' && $line =~ m#(/\d{1,3})$#){

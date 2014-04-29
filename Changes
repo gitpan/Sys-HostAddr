@@ -1,5 +1,8 @@
 Revision history for Perl extension Sys::HostAddr.
 
+0.992  Mon Apr 28 21:34:52 EDT 2014
+        - rhel7 support
+
 0.991  Wed Mar 11 21:29:49 EDT 2014
         - www.whatismyip.com people changed again, moving to my own.
 
