@@ -1,5 +1,5 @@
 # Sys::HostAddr.pm
-# $Id: HostAddr.pm,v 0.992 2014/04/28 21:34:52 jkister Exp $
+# $Id: HostAddr.pm,v 0.993 2014/09/06 00:53:19 jkister Exp $
 # Copyright (c) 2010-2014 Jeremy Kister.
 # Released under Perl's Artistic License.
 
@@ -10,7 +10,7 @@ use warnings;
 use IO::Socket::INET;
 use Sys::Hostname;
 
-our ($VERSION) = q$Revision: 0.992 $ =~ /(\d+\.\d+)/;
+our ($VERSION) = q$Revision: 0.993 $ =~ /(\d+\.\d+)/;
 my $ipv;
 
 
@@ -59,13 +59,20 @@ sub public {
         alarm(3);
         print $sock "GET /mip.mpl HTTP/1.1\r\n",                     
                     "Host: www.dnsbyweb.com\r\n",
-                    "User-Agent: Sys::HostAddr/$VERSION (compatible; MSIE 8.0; ${platform}; Perl $])\r\n",  
+                    "User-Agent: Sys::HostAddr/$VERSION (compatible; ${platform}; Perl $])\r\n",  
                     "Accept: text/html; q=0.5, text/plain\r\n",
                     "Connection: close\r\n",
                     "\r\n";
 
+        my $dh; # done header
         while(<$sock>){
-            if(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/){
+            if( /^\r\n$/ ){
+                $dh=1;
+                next;
+            }
+            next unless $dh;
+
+            if(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/){
                 $public = $1;
                 last;
             }
